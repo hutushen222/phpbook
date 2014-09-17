@@ -1,15 +1,6 @@
 第 1 章 PHP 的生命周期
 ====================
 
-目录
-----
-
-1. 让我们从 SAPI 开始
-2. PHP 的启动与终止
-3. PHP 的生命周期
-4. 线程安全
-5. 小结
-
 在平常的 Web 环境中，我们并不需要单独启动 PHP，它一般都会作为一个模块自动加载到 Web Server 里面去，如 Apache 加载的 `php5.so`。只要我们启动了 Web Server，被一起加载的 PHP 便会和服务器一起解析被请求的 PHP 脚本。
 
 当然，这不是绝对的，当我们以 FastCGI 模式运行 PHP 的时候，往往需要手工通过命令来启动来启动 PHP 后端服务。
@@ -147,13 +138,13 @@ PHP_FUNCTION(walu_test)
 * 多线程模式
 * Embedded(嵌入式，在自己的C程序中调用Zend Engine)
 
-### 1、CLI/CGI
+### 1.3.1 CLI/CGI
 
 CLI 和 CGI 的 SAPI 是相当特殊的，因为这时 PHP 的生命周期完全在一个单独的请求中完成。虽然简单，不过我们以前提过的两种 init 和两种 shutdown 仍然都会被执行。图 1.1 展示了 PHP 在这种模式下是怎么工作的。
 
 <p style="text-align:center"><img src="http://www.walu.cc/phpbook/image/01fig01.jpg" /></p>
 
-### 2、多进程模式
+### 1.3.2 多进程模式
 
 **[ps:书是2006年出版的，所以你应该理解作者说多进程是主流]**
 
@@ -165,7 +156,7 @@ PHP 最常见的工作方式便是编译成为 Apache2 的 Prefork MPM 或者 Ap
 
 <p style="text-align:center"><img src="http://www.walu.cc/phpbook/image/01fig03.jpg" /></p>
 
-### 3、多线程模式
+### 1.3.3 多线程模式
 
 随着时代的进步，PHP 越来越多的在多线程模式下工作，就像 IIS 的 isapi 和 Apache MPM worker **（支持混合的多线程多进程的多路处理模块）**。在这种模式下，只有一个服务器进程在运行着，但会同时运行很多线程，这样可以减少一些资源开销，像 Module init 和 Module shutdown 就只需要运行一次就行了，一些全局变量也只需要初始化一次，因为线程独具的特质，使得各个请求之间方便的共享一些数据成为可能。
 
@@ -175,7 +166,7 @@ PHP 最常见的工作方式便是编译成为 Apache2 的 Prefork MPM 或者 Ap
 
 <p style="text-align:center"><img src="http://www.walu.cc/phpbook/image/01fig04.jpg" /></p>
 
-### 4、Embed
+### 1.3.4 Embed
 
 Embed SAPI 是一种比较特殊的 SAPI，容许你在 C/C++ 语言中调用 PHP/ZE 提供的函数。并且这种 SAPI 和上面的三种一样，按 Module Init、Request Init、Rshutdown、mshutdown 的流程执行着。当然，这只是其中一种情况。因为特定的应用有自己特殊的需求，只是在处理 PHP 脚本这个环节基本一致。
 
