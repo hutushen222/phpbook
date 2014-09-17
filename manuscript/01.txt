@@ -25,99 +25,89 @@ PHP 程序的启动可以看作有两个概念上的启动，终止也有两个�
 
 内核中预置了 `PHP_MINIT_FUNCTION` 宏函数，来帮助我们实现这个功能：
 
-````
-// 抛弃作者那个例子，书才看两页整那样的例子太复杂了!
-// walu 是我扩展的名称
-int time_of_minit; // 在 MINIT() 中初始化，在每次页面请求中输出，看看是否变化
-PHP_MINIT_FUNCTION(walu)
-{
-	time_of_minit=time(NULL); // 我们在 MINIT 启动中对他初始化
-	return SUCCESS; // 返回 SUCCESS 代表正常，返回 FALIURE 就不会加载这个扩展了。
-}
-````
+    // 抛弃作者那个例子，书才看两页整那样的例子太复杂了!
+    // walu 是我扩展的名称
+    int time_of_minit; // 在 MINIT() 中初始化，在每次页面请求中输出，看看是否变化
+    PHP_MINIT_FUNCTION(walu)
+    {
+    	time_of_minit=time(NULL); // 我们在 MINIT 启动中对他初始化
+    	return SUCCESS; // 返回 SUCCESS 代表正常，返回 FALIURE 就不会加载这个扩展了。
+    }
 
 当一个页面请求到来时候，PHP 会迅速的开辟一个新的环境，并重新扫描自己的各个扩展，遍历执行它们各自的 `RINIT` 方法（俗称 Request Initialization），这时候一个扩展可能会初始化在本次请求中会使用到的变量等，还会初始化等会儿用户端（即 PHP 脚本）中的变量之类的，内核预置了 `PHP_RINIT_FUNCTION()` 这个宏函数来帮我们实现这个功能：
 
-````
-int time_of_rinit; // 在RINIT里初始化，看看每次页面请求的时候是否变化。
-PHP_RINIT_FUNCTION(walu)
-{
-	time_of_rinit=time(NULL);
-	return SUCCESS;
-}
-````
+    int time_of_rinit; // 在RINIT里初始化，看看每次页面请求的时候是否变化。
+    PHP_RINIT_FUNCTION(walu)
+    {
+    	time_of_rinit=time(NULL);
+    	return SUCCESS;
+    }
 
 好了，现在这个页面请求执行的差不多了，可能是顺利的走到了自己文件的最后，也可能是出师未捷，半道被用户给 die 或者 exit 了，这时候 PHP 便会启动回收程序，收拾这个请求留下的烂摊子。它这次会执行所有已加载扩展的 `RSHUTDOWN`（俗称 Request Shutdown）方法，这时候扩展可以抓紧利用内核中的变量表之类的做一些事情，因为一旦 PHP 把所有扩展的 `RSHUTDOWN` 方法执行完，便会释放掉这次请求使用过的所有东西，包括变量表的所有变量、所有在这次请求中申请的内存等等。
 
 内核预置了 `PHP_RSHUTDOWN_FUNCTION` 宏函数来帮助我们实现这个功能
 
-````
-PHP_RSHUTDOWN_FUNCTION(walu)
-{
-	FILE *fp=fopen("time_rshutdown.txt","a+");
-	fprintf(fp,"%ld\n",time(NULL)); // 让我们看看是不是每次请求结束都会在这个文件里追加数据
-	fclose(fp);
-	return SUCCESS;
-}
-````
+    PHP_RSHUTDOWN_FUNCTION(walu)
+    {
+    	FILE *fp=fopen("time_rshutdown.txt","a+");
+    	fprintf(fp,"%ld\n",time(NULL)); // 让我们看看是不是每次请求结束都会在这个文件里追加数据
+    	fclose(fp);
+    	return SUCCESS;
+    }
 
 前面该启动的也启动了，该结束的也结束了，现在该 Apache 老人家歇歇的时候，当 Apache 通知 PHP 自己要 Stop 的时候，PHP 便进入 `MSHUTDOWN`（俗称 Module Shutdown）阶段。这时候 PHP 便会给所有扩展下最后通牒，如果哪个扩展还有未了的心愿，就放在自己 `MSHUTDOWN` 方法里，这可是最后的机会了，一旦 PHP 把扩展的 `MSHUTDOWN`执行完，便会进入自毁程序，这里一定要把自己擅自申请的内存给释放掉，否则就杯具了。
 
 内核中预置了 `PHP_MSHUTDOWN_FUNCTION` 宏函数来帮助我们实现这个功能：
 
-````
-PHP_MSHUTDOWN_FUNCTION(walu)
-{
-	FILE *fp=fopen("time_mshutdown.txt","a+");
-	fprintf(fp,"%ld\n",time(NULL));
-	return SUCCESS;
-}
-````
+    PHP_MSHUTDOWN_FUNCTION(walu)
+    {
+    	FILE *fp=fopen("time_mshutdown.txt","a+");
+    	fprintf(fp,"%ld\n",time(NULL));
+    	return SUCCESS;
+    }
 
 这四个宏都是在 `walu.c` 里完成最终实现的，而他们的则是在 `/main/php.h` 里被定义的(其实也是调用的别的宏，本节最后我把这几个宏给展开了，供有需要的人查看)。
 
 **好了，现在我们本节内容说完了，下面我们把所有的代码合在一起，并预测一下应该出现的结果：**
 
-````
-// 这些代码都在 walu.c 里面，不在 .h 里
+    // 这些代码都在 walu.c 里面，不在 .h 里
 
-int time_of_minit; // 在MINIT中初始化，在每次页面请求中输出，看看是否变化
-PHP_MINIT_FUNCTION(walu)
-{
-	time_of_minit=time(NULL); // 我们在MINIT启动中对他初始化
-	return SUCCESS;
-}
+    int time_of_minit; // 在MINIT中初始化，在每次页面请求中输出，看看是否变化
+    PHP_MINIT_FUNCTION(walu)
+    {
+    	time_of_minit=time(NULL); // 我们在MINIT启动中对他初始化
+    	return SUCCESS;
+    }
 
-int time_of_rinit; // 在RINIT里初始化，看看每次页面请求的时候是否变化。
-PHP_RINIT_FUNCTION(walu)
-{
-	time_of_rinit=time(NULL);
-	return SUCCESS;
-}
+    int time_of_rinit; // 在RINIT里初始化，看看每次页面请求的时候是否变化。
+    PHP_RINIT_FUNCTION(walu)
+    {
+    	time_of_rinit=time(NULL);
+    	return SUCCESS;
+    }
 
-PHP_RSHUTDOWN_FUNCTION(walu)
-{
-	FILE *fp=fopen("/cnan/www/erzha/time_rshutdown.txt","a+"); // 请确保文件可写，否则apache会莫名崩溃
-	fprintf(fp,"%d\n",time(NULL)); // 让我们看看是不是每次请求结束都会在这个文件里追加数据
-	fclose(fp);
-	return SUCCESS;
-}
+    PHP_RSHUTDOWN_FUNCTION(walu)
+    {
+    	FILE *fp=fopen("/cnan/www/erzha/time_rshutdown.txt","a+"); // 请确保文件可写，否则apache会莫名崩溃
+    	fprintf(fp,"%d\n",time(NULL)); // 让我们看看是不是每次请求结束都会在这个文件里追加数据
+    	fclose(fp);
+    	return SUCCESS;
+    }
 
-PHP_MSHUTDOWN_FUNCTION(walu)
-{
-	FILE *fp=fopen("/cnan/www/erzha/time_mshutdown.txt","a+"); // 请确保文件可写，否则apache会莫名崩溃
-	fprintf(fp,"%d\n",time(NULL));
-	return SUCCESS;
-}
+    PHP_MSHUTDOWN_FUNCTION(walu)
+    {
+    	FILE *fp=fopen("/cnan/www/erzha/time_mshutdown.txt","a+"); // 请确保文件可写，否则apache会莫名崩溃
+    	fprintf(fp,"%d\n",time(NULL));
+    	return SUCCESS;
+    }
 
-// 我们在页面里输出time_of_minit和time_of_rinit的值
-PHP_FUNCTION(walu_test)
-{
-	php_printf("%d&lt;br /&gt;",time_of_minit);
-	php_printf("%d&lt;br /&gt;",time_of_rinit);
-	return;
-}
-````
+    // 我们在页面里输出time_of_minit和time_of_rinit的值
+    PHP_FUNCTION(walu_test)
+    {
+    	php_printf("%d&lt;br /&gt;",time_of_minit);
+    	php_printf("%d&lt;br /&gt;",time_of_rinit);
+    	return;
+    }
 
 * `time_of_minit` 的值每次请求都不变。
 * `time_of_rinit` 的值每次请求都改变。
@@ -197,28 +187,24 @@ Embed SAPI 是一种比较特殊的 SAPI，容许你在 C/C++ 语言中调用 PH
 
 在扩展的 Module Init 里，扩展可以调用 ts_allocate_id() 来告诉 TRSM 自己需要多少资源。 TRSM 接收后更新系统使用的资源，并得到一个指向刚分配的那份资源的 id。
 
-````
-typedef struct {
-	int sampleint;
-	char *samplestring;
-} php_sample_globals;
-int sample_globals_id;
+    typedef struct {
+    	int sampleint;
+    	char *samplestring;
+    } php_sample_globals;
+    int sample_globals_id;
 
-PHP_MINIT_FUNCTION(sample)
-{
-    ts_allocate_id(&sample_globals_id,
-        sizeof(php_sample_globals),
-        (ts_allocate_ctor) php_sample_globals_ctor,
-        (ts_allocate_dtor) php_sample_globals_dtor);
-    return SUCCESS;
-}
-````
+    PHP_MINIT_FUNCTION(sample)
+    {
+        ts_allocate_id(&sample_globals_id,
+            sizeof(php_sample_globals),
+            (ts_allocate_ctor) php_sample_globals_ctor,
+            (ts_allocate_dtor) php_sample_globals_dtor);
+        return SUCCESS;
+    }
 
 当一个请求需要访问数据段的时候，扩展从TSRM层请求当前线程的资源池，以 ts_allocate_id() 返回的资源 ID 来获取偏移量。换句话说，在代码流中，你可能会在前面所说的MINIT语句中碰到 `SAMPLE_G(sampleint) = 5;` 这样的语句。在线程安全的构建下，这个语句通过一些宏扩展如下：
 
-````
-(((php_sample_globals*)(*((void ***)tsrm_ls))[sample_globals_id-1])->sampleint = 5;
-````
+    (((php_sample_globals*)(*((void ***)tsrm_ls))[sample_globals_id-1])->sampleint = 5;
 
 如果你看不懂上面的转换也不用沮丧，它已经很好的封装在 PHP API 中了，以至于许多开发者都不需要知道它怎样工作的。
 
@@ -227,19 +213,17 @@ PHP_MINIT_FUNCTION(sample)
 因为在 PHP 的线程安全构建中访问全局资源涉及到在线程数据池查找对应的偏移量，这是一些额外的负载，结果就是它比对应的非线程方式（直接从编译期已经计算好的真实的全局变量地址中取出数据）慢一些。
 考虑上面的例子，这一次在非线程构建下：
 
-````
-typedef struct {
-    int sampleint;
-    char *samplestring;
-} php_sample_globals;
-php_sample_globals sample_globals;
+    typedef struct {
+        int sampleint;
+        char *samplestring;
+    } php_sample_globals;
+    php_sample_globals sample_globals;
 
-PHP_MINIT_FUNCTION(sample)
-{
-    php_sample_globals_ctor(&sample_globals TSRMLS_CC);
-    return SUCCESS;
-}
-````
+    PHP_MINIT_FUNCTION(sample)
+    {
+        php_sample_globals_ctor(&sample_globals TSRMLS_CC);
+        return SUCCESS;
+    }
 
 首先注意到的是这里并没有定义一个 int 型的标识去引用全局的结构定义，只是简单的在进程的全局空间定义了一个结构体。也就是说 `SAMPLE_G(sampleint) = 5;` 展开后就是 `sample_globals.sampleint = 5;` 简单，快速，高效。非线程构建还有进程隔离的优势，这样给定的请求碰到完全出乎意料的情况时，它也不会影响其他进程，即便是产生段错误也不会导致整个 Web Server 瘫痪。实际上，Apache 的 MaxRequestsPerChild 指令就是设计用来提升这个特性的，它经常性的有目的性的 kill 掉子进程并产生新的子进程，来避免某些可能由于进程长时间运行“累积”而来的问题（比如内存泄露）。
 
@@ -253,39 +237,33 @@ PHP_MINIT_FUNCTION(sample)
 
 这个可选的指针参数通过下面一组定义包含到原型中。当 ZTS 禁用时，这些定义都被展开为空；当 ZTS 开启时，它们展开如下：
 
-````
-#define TSRMLS_D     void ***tsrm_ls
-#define TSRMLS_DC     , void ***tsrm_ls
-#define TSRMLS_C     tsrm_ls
-#define TSRMLS_CC     , tsrm_ls
-````
+    #define TSRMLS_D     void ***tsrm_ls
+    #define TSRMLS_DC     , void ***tsrm_ls
+    #define TSRMLS_C     tsrm_ls
+    #define TSRMLS_CC     , tsrm_ls
 
 非 ZTS 构建对下面的代码看到的是两个参数：int, char *。在 ZTS 构建下，原型则包含三个参数：int, char *, void ***。当你的程序调用这个函数时，只有在 ZTS 启用时才需要传递第三个参数。下面代码的第二行展示了宏的展开：
 
-````
-int php_myext_action(int action_id, char *message TSRMLS_DC);
-php_myext_action(42, "The meaning of life" TSRMLS_CC);
-````
+    int php_myext_action(int action_id, char *message TSRMLS_DC);
+    php_myext_action(42, "The meaning of life" TSRMLS_CC);
 
 通过在函数调用中包含这个特殊的变量，php_myext_action 就可以使用 tsrm_ls 的值和 MYEXT_G() 宏函数一起访问它的线程特有全局数据。在非 ZTS 构建上，tsrm_ls 将不可用，但是这是 ok 的，因为此时 MYEXT_G() 宏函数以及其他类似的宏都不会使用它。现在考虑，你在一个新的扩展上工作，并且有下面的函数，它可以在你本地使用 CLI SAPI 的构建上正常工作，并且即便使用 Apache 1 的 APXS SAPI 编译也可以正常工作：
 
-````
-static int php_myext_isset(char *varname, int varname_len)
-{
-    zval **dummy;
+    static int php_myext_isset(char *varname, int varname_len)
+    {
+        zval **dummy;
 
 
-    if (zend_hash_find(EG(active_symbol_table),
-        varname, varname_len + 1,
-        (void**)&dummy) == SUCCESS) {
-        /* Variable exists */
-        return 1;
-    } else {
-        /* Undefined variable */
-        return 0;
+        if (zend_hash_find(EG(active_symbol_table),
+            varname, varname_len + 1,
+            (void**)&dummy) == SUCCESS) {
+            /* Variable exists */
+            return 1;
+        } else {
+            /* Undefined variable */
+            return 0;
+        }
     }
-}
-````
 
 所有的一切看起来都工作正常，你打包这个扩展发送给他人构建并运行在生产服务器上。让你气馁的是，对方报告扩展编译失败。事实上它们使用了 Apache 2.0 的线程模式，因此它们的 PHP 构建启用了 ZTS。当编译期碰到你使用的 EG() 宏函数时，它尝试在本地空间查找 tsrm_ls 没有找到，因为你并没有定义它并且没有在你的函数中传递。修复这个问题非常简单；只需要在 php_myext_isset() 的定义上增加 TSRMLS_DC，并在每行调用它的地方增加 TSRMLS_CC。不幸的是，现在对方已经有点不信任你的扩展质量了，这样就会推迟你的演示周期。这种问题越早解决越好。现在有了 enable-maintainer-zts 指令。通过在 ./configure 时增加该指令来构建 PHP，你的构建将自动的包含 ZTS，哪怕你当前的 SAPI（比如 CLI）不需要它。打开这个开关，你可以避免这些常见的不应该出现的错误。注意：在 PHP 4 中，enable-maintainer-zts 标记等价的名字是 enable-experimental-zts；请确认使用你的 PHP 版本对应的正确标记。
 
@@ -293,33 +271,31 @@ static int php_myext_isset(char *varname, int varname_len)
 
 有时，我们需要在一个函数中使用 tsrm_ls 指针，但却不能传递它。通常这是因为你的扩展作为某个使用回调的库的接口，它并没有提供返回抽象指针的地方。考虑下面的代码片段：
 
-````
-void php_myext_event_callback(int eventtype, char *message)
-{
-    zval *event;
+    void php_myext_event_callback(int eventtype, char *message)
+    {
+        zval *event;
 
-    /* $event = array('event'=>$eventtype,
-                    'message'=>$message) */
-    MAKE_STD_ZVAL(event);
-    array_init(event);
-    add_assoc_long(event, "type", eventtype);
-    add_assoc_string(event, "message", message, 1);
+        /* $event = array('event'=>$eventtype,
+                        'message'=>$message) */
+        MAKE_STD_ZVAL(event);
+        array_init(event);
+        add_assoc_long(event, "type", eventtype);
+        add_assoc_string(event, "message", message, 1);
 
 
-    /* $eventlog[] = $event; */
-    add_next_index_zval(EXT_G(eventlog), event);
-}
-PHP_FUNCTION(myext_startloop)
-{
-    /* The eventlib_loopme() function,
-     * exported by an external library,
-     * waits for an event to happen,
-     * then dispatches it to the
-     * callback handler specified.
-     */
-    eventlib_loopme(php_myext_event_callback);
-}
-````
+        /* $eventlog[] = $event; */
+        add_next_index_zval(EXT_G(eventlog), event);
+    }
+    PHP_FUNCTION(myext_startloop)
+    {
+        /* The eventlib_loopme() function,
+         * exported by an external library,
+         * waits for an event to happen,
+         * then dispatches it to the
+         * callback handler specified.
+         */
+        eventlib_loopme(php_myext_event_callback);
+    }
 
 虽然你可能不完全理解这段代码，但你应该注意到了回调函数中使用了 EXT_G() 宏函数，我们知道在线程安全构建下它需要 tsrm_ls 指针。修改函数原型并不好也不应该这样做，因为外部的库并不知道 PHP 的线程安全模型。那这种情况下怎样让 tsrm_ls 可用呢？解决方案是前面提到的名为 TSRMLS_FETCH() 的 Zend 宏函数。将它放到代码片段的顶部，这个宏将执行给予当前线程上下文的查找，并定义本地的 tsrm_ls 指针拷贝。这个宏可以在任何地方使用并且不用通过函数调用传递 tsrm_ls，尽管这看起来很诱人，但是，要注意到这一点：TSRMLS_FETCH 调用需要一定的处理时间。这在单次迭代中并不明显，但是随着你的线程数增多，随着你调用 TSRMLS_FETCH() 的点的增多，你的扩展就会显现出这个瓶颈。因此，请谨慎的使用它。注意：为了和 C++ 编译器兼容，请确保将 TSRMLS_FETCH() 和所有变量定义放在给定块作用域的顶部（任何其他语句之前）。因为 TSRMLS_FETCH() 宏自身有多种不同的解析方式，因此最好将它作为变量定义的最后一行。
 
