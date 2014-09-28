@@ -100,7 +100,7 @@ Web 服务器以及它的 PHP 模块来说，都是伴随着操作系统长时�
 它能够执行与OS在一个进程终止时相同的行为。也就是说，它会隐式地释放所有的为该请求所占用的内存。
 图1展示了ZendMM与OS以及PHP进程之间的关系。
 
-<img src="http://www.walu.cc/phpbook/image/03fig01.jpg" />
+![03-01](images/03fig01.jpg)
 
 除了提供隐式的内存清除功能之外，ZendMM还能够根据php.ini中memory_limit设置来控制每一次内存请求行为，
 如果一个脚本试图请求比系统中可用内存更多的内存，或大于它每次应该请求的最大量，
@@ -325,12 +325,11 @@ Web 服务器以及它的 PHP 模块来说，都是伴随着操作系统长时�
 这里我们可以看到,$a,$b,$c这三个变量现在共用一个zval结构，有两个属于change-on-write组合($a,$c),有两个属于copy-on-write组合($a,$b),我们的is_ref__gc和refcount__gc该怎样工作，才能正确的处理好这段复杂的关系呢？
 The answer is: 不可能！在这种情况下，变量的值必须分离成两份完全独立的存在！$a与$c共用一个zval,$b自己用一个zval，尽管他们拥有同样的值，但是必须至少通过两个zval来实现。见图3.2【在引用时强制复制！】
 
-<img src="http://www.walu.cc/phpbook/image/03fig02.jpg" />
+![03-02](images/03fig02.jpg)
 
 同样，下面的这段代码同样会在内核中产生歧义，所以需要强制复制！
 
-<img src="http://www.walu.cc/phpbook/image/03fig03.jpg" />
-
+![03-03](images/03fig03.jpg)
 
     //上图对应的代码
     $a = 1;
