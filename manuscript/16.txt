@@ -1,5 +1,5 @@
 第 16 章 有趣的流
----------------
+===============
 
 php常被提起的一个特性是流上下文. 这个可选的参数甚至在用户空间大多数流创建相关的函数中都可用, 它作为一个泛化的框架用于向给定包装器或流实现传入/传出额外的信息.
 
@@ -119,18 +119,17 @@ php常被提起的一个特性是流上下文. 这个可选的参数甚至在用
 当将一个php_stream_notifier结构体赋值给context->notifier时, 它将提供一个回调函数func, 在特定的流上发生下表中的PHP_STREAM_NOTIFY_*代码表示的事件时被触发. 每个事件将会对应下面第二张表中的PHP_STREAM_NOTIFY_SEVERITY_*的级别:
 
 <table>
-  <tr>
-		<tr><td>事件代码</td><td>含义</td></tr>
-		<tr><td>RESOLVE</td><td>主机地址解析完成. 多数基于套接字的包装器将在连接之前执行这个查询.</td></tr>
-		<tr><td>CONNECT</td><td>套接字流连接到远程资源完成.</td></tr>
-		<tr><td>AUTH_REQUIRED</td><td>请求的资源不可用, 原因是访问控制以及缺失授权</td></tr>
-		<tr><td>MIME_TYPE_IS</td><td>远程资源的mime-type不可用</td></tr>
-		<tr><td>FILE_SIZE_IS</td><td>远程资源当前可用大小</td></tr>
-		<tr><td>REDIRECTED</td><td>原来的URL请求导致重定向到其他位置</td></tr>
-		<tr><td>PROGRESS</td><td>由于额外数据的传输导致php_stream_notifier结构体的progress以及(可能的)progress_max元素被更新(进度信息, 请参考php手册curl_setopt的CURLOPT_PROGRESSFUNCTION和CURLOPT_NOPROGRESS选项)</td></tr>
-		<tr><td>COMPLETED</td><td>流上没有更多的可用数据</td></tr>
-		<tr><td>FAILURE</td><td>请求的URL资源不成功或未完成</td></tr>
-		<tr><td>AUTH_RESULT</td><td>远程系统已经处理了授权认证</td></tr>
+	<tr><td>事件代码</td><td>含义</td></tr>
+	<tr><td>RESOLVE</td><td>主机地址解析完成. 多数基于套接字的包装器将在连接之前执行这个查询.</td></tr>
+	<tr><td>CONNECT</td><td>套接字流连接到远程资源完成.</td></tr>
+	<tr><td>AUTH_REQUIRED</td><td>请求的资源不可用, 原因是访问控制以及缺失授权</td></tr>
+	<tr><td>MIME_TYPE_IS</td><td>远程资源的mime-type不可用</td></tr>
+	<tr><td>FILE_SIZE_IS</td><td>远程资源当前可用大小</td></tr>
+	<tr><td>REDIRECTED</td><td>原来的URL请求导致重定向到其他位置</td></tr>
+	<tr><td>PROGRESS</td><td>由于额外数据的传输导致php_stream_notifier结构体的progress以及(可能的)progress_max元素被更新(进度信息, 请参考php手册curl_setopt的CURLOPT_PROGRESSFUNCTION和CURLOPT_NOPROGRESS选项)</td></tr>
+	<tr><td>COMPLETED</td><td>流上没有更多的可用数据</td></tr>
+	<tr><td>FAILURE</td><td>请求的URL资源不成功或未完成</td></tr>
+	<tr><td>AUTH_RESULT</td><td>远程系统已经处理了授权认证</td></tr>
 </table>
 
 <table>
