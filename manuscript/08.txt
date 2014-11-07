@@ -870,8 +870,7 @@ int zend_hash_minmax(HashTable *ht, compare_func_t compar,int flag, void **pData
 
 zend_hash_compare()也许要回调函数，它的功能是将HashTable看作一个整体与另一个HashTable做比较，如果前者大于后者返回1，相等返回0，否则返回-1。
 
-<p>int zend_hash_compare(HashTable *hta, HashTable *htb,compare_func_t compar, zend_bool ordered TSRMLS_DC);
-
+    int zend_hash_compare(HashTable *hta, HashTable *htb,compare_func_t compar, zend_bool ordered TSRMLS_DC);
 
 默认情况下它往往是先判断各个HashTable元素的个数，个数多的最大！
 如果两者的元素一样多，然后就比较它们各自的第一个元素，If the ordered flag is set, it compares keys/indices with the first element of htb string keys are compared first on length, and then on binary sequence using memcmp(). If the keys are equal, the value of the element is compared with the first element of htb using the comparison callback function.
